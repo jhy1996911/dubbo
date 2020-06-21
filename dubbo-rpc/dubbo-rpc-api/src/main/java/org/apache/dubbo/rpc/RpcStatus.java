@@ -34,8 +34,11 @@ public class RpcStatus {
 
     private static final ConcurrentMap<String, RpcStatus> SERVICE_STATISTICS = new ConcurrentHashMap<String, RpcStatus>();
 
+    // key 为接口 value为map
+    // 内层map key为方法名 value 为RpcStatus 对象
     private static final ConcurrentMap<String, ConcurrentMap<String, RpcStatus>> METHOD_STATISTICS = new ConcurrentHashMap<String, ConcurrentMap<String, RpcStatus>>();
     private final ConcurrentMap<String, Object> values = new ConcurrentHashMap<String, Object>();
+    // 当前激活并发数
     private final AtomicInteger active = new AtomicInteger();
     private final AtomicLong total = new AtomicLong();
     private final AtomicInteger failed = new AtomicInteger();
@@ -51,6 +54,7 @@ public class RpcStatus {
     /**
      * @param url
      * @return status
+     *
      */
     public static RpcStatus getStatus(URL url) {
         String uri = url.toIdentityString();
@@ -69,6 +73,7 @@ public class RpcStatus {
      * @param url
      * @param methodName
      * @return status
+     * 获取方法对应的 RpcStatus
      */
     public static RpcStatus getStatus(URL url, String methodName) {
         String uri = url.toIdentityString();
@@ -93,16 +98,19 @@ public class RpcStatus {
 
     /**
      * @param url
+     * 递增方法对应的激活并发数
      */
     public static boolean beginCount(URL url, String methodName, int max) {
         max = (max <= 0) ? Integer.MAX_VALUE : max;
         RpcStatus appStatus = getStatus(url);
+        // 获取方法对应的RpcStatus
         RpcStatus methodStatus = getStatus(url, methodName);
         if (methodStatus.active.get() == Integer.MAX_VALUE) {
             return false;
         }
         for (int i; ; ) {
             i = methodStatus.active.get();
+            // 递增激活数 如果大于max返回false 否则递增返回true
             if (i + 1 > max) {
                 return false;
             }
@@ -124,7 +132,9 @@ public class RpcStatus {
         endCount(getStatus(url, methodName), elapsed, succeeded);
     }
 
+
     private static void endCount(RpcStatus status, long elapsed, boolean succeeded) {
+        // 递减并发访问数
         status.active.decrementAndGet();
         status.total.incrementAndGet();
         status.totalElapsed.addAndGet(elapsed);

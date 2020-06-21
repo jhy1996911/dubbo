@@ -97,7 +97,9 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
         // find handler by message class.
         Object msg = req.getData();
         try {
+            // 调用dubbo 的reply方法
             CompletionStage<Object> future = handler.reply(channel, msg);
+            // 异步回调
             future.whenComplete((appResult, t) -> {
                 try {
                     if (t == null) {
@@ -165,18 +167,23 @@ public class HeaderExchangeHandler implements ChannelHandlerDelegate {
     @Override
     public void received(Channel channel, Object message) throws RemotingException {
         final ExchangeChannel exchangeChannel = HeaderExchangeChannel.getOrAddChannel(channel);
+        // 如果是请求类型的
         if (message instanceof Request) {
             // handle request.
             Request request = (Request) message;
             if (request.isEvent()) {
+                // 处理请求
                 handlerEvent(channel, request);
             } else {
+                // 需要有返回值的
                 if (request.isTwoWay()) {
                     handleRequest(exchangeChannel, request);
                 } else {
+                    // 不需要有返回值的
                     handler.received(exchangeChannel, request.getData());
                 }
             }
+            // 响应类型的
         } else if (message instanceof Response) {
             handleResponse(channel, (Response) message);
         } else if (message instanceof String) {

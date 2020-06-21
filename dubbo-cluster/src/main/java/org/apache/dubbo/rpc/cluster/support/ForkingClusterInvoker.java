@@ -45,6 +45,8 @@ import static org.apache.dubbo.rpc.cluster.Constants.DEFAULT_FORKS;
  * Invoke a specific number of invokers concurrently, usually used for demanding real-time operations, but need to waste more service resources.
  *
  * <a href="http://en.wikipedia.org/wiki/Fork_(topology)">Fork</a>
+ *
+ * 并发执行 只要有一个返回 就直接返回 提高性能
  */
 public class ForkingClusterInvoker<T> extends AbstractClusterInvoker<T> {
 
@@ -65,20 +67,25 @@ public class ForkingClusterInvoker<T> extends AbstractClusterInvoker<T> {
         try {
             checkInvokers(invokers, invocation);
             final List<Invoker<T>> selected;
+            // 线程数
             final int forks = getUrl().getParameter(FORKS_KEY, DEFAULT_FORKS);
             final int timeout = getUrl().getParameter(TIMEOUT_KEY, DEFAULT_TIMEOUT);
+            // 获取并行的invokers 列表
             if (forks <= 0 || forks >= invokers.size()) {
                 selected = invokers;
             } else {
                 selected = new ArrayList<>(forks);
                 while (selected.size() < forks) {
+                    // 需要执行的一次执行不完 需要循环多次
                     Invoker<T> invoker = select(loadbalance, invocation, invokers, selected);
+                    // 防止重复添加
                     if (!selected.contains(invoker)) {
                         //Avoid add the same invoker several times.
                         selected.add(invoker);
                     }
                 }
             }
+            // 开启线程池执行
             RpcContext.getContext().setInvokers((List) selected);
             final AtomicInteger count = new AtomicInteger();
             final BlockingQueue<Object> ref = new LinkedBlockingQueue<>();
@@ -88,6 +95,7 @@ public class ForkingClusterInvoker<T> extends AbstractClusterInvoker<T> {
                         Result result = invoker.invoke(invocation);
                         ref.offer(result);
                     } catch (Throwable e) {
+                        // 调用失败则进行记录
                         int value = count.incrementAndGet();
                         if (value >= selected.size()) {
                             ref.offer(e);
@@ -96,6 +104,7 @@ public class ForkingClusterInvoker<T> extends AbstractClusterInvoker<T> {
                 });
             }
             try {
+                // 获取执行结果并返回
                 Object ret = ref.poll(timeout, TimeUnit.MILLISECONDS);
                 if (ret instanceof Throwable) {
                     Throwable e = (Throwable) ret;

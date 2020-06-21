@@ -262,6 +262,7 @@ public class ConfigValidationUtils {
             return;
         }
 
+        // 格式化mock
         String normalizedMock = MockInvoker.normalizeMock(mock);
         if (normalizedMock.startsWith(RETURN_PREFIX)) {
             normalizedMock = normalizedMock.substring(RETURN_PREFIX.length()).trim();
@@ -272,6 +273,7 @@ public class ConfigValidationUtils {
                 throw new IllegalStateException("Illegal mock return in <dubbo:service/reference ... " +
                         "mock=\"" + mock + "\" />");
             }
+            // 校验合法性
         } else if (normalizedMock.startsWith(THROW_PREFIX)) {
             normalizedMock = normalizedMock.substring(THROW_PREFIX.length()).trim();
             if (ConfigUtils.isNotEmpty(normalizedMock)) {
@@ -285,6 +287,7 @@ public class ConfigValidationUtils {
             }
         } else {
             //Check whether the mock class is a implementation of the interfaceClass, and if it has a default constructor
+            // 校验mock接口合法性
             MockInvoker.getMockObject(normalizedMock, interfaceClass);
         }
     }

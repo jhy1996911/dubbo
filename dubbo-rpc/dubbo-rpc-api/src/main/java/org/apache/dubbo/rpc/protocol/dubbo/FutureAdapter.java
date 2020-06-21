@@ -35,6 +35,7 @@ public class FutureAdapter<V> extends CompletableFuture<V> {
     private CompletableFuture<AppResponse> appResponseFuture;
 
     public FutureAdapter(CompletableFuture<AppResponse> future) {
+
         this.appResponseFuture = future;
         future.whenComplete((appResponse, t) -> {
             if (t != null) {
@@ -43,6 +44,7 @@ public class FutureAdapter<V> extends CompletableFuture<V> {
                 }
                 this.completeExceptionally(t);
             } else {
+                // 写入异常信息
                 if (appResponse.hasException()) {
                     this.completeExceptionally(appResponse.getException());
                 } else {

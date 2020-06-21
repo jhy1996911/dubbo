@@ -179,6 +179,7 @@ final public class MockInvoker<T> implements Invoker<T> {
     @SuppressWarnings("unchecked")
     public static Object getMockObject(String mockService, Class serviceType) {
         boolean isDefault = ConfigUtils.isDefault(mockService);
+        // 拼接接口名
         if (isDefault) {
             mockService = serviceType.getName() + "Mock";
         }

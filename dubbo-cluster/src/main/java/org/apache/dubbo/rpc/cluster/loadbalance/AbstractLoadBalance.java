@@ -68,6 +68,7 @@ public abstract class AbstractLoadBalance implements LoadBalance {
      * Get the weight of the invoker's invocation which takes warmup time into account
      * if the uptime is within the warmup time, the weight will be reduce proportionally
      *
+     * 如果机器没有过预热期(默认十分钟) 则会根据用户设置的权重与预热时间进行加权计算
      * @param invoker    the invoker
      * @param invocation the invocation of this invoker
      * @return weight

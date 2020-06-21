@@ -33,6 +33,7 @@ class InjvmExporter<T> extends AbstractExporter<T> {
 
     InjvmExporter(Invoker<T> invoker, String key, Map<String, Exporter<?>> exporterMap) {
         super(invoker);
+        // 服务名称
         this.key = key;
         this.exporterMap = exporterMap;
         exporterMap.put(key, this);

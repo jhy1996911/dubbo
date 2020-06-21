@@ -88,6 +88,7 @@ public abstract class AbstractDirectory<T> implements Directory<T> {
         this.routerChain = routerChain;
     }
 
+    // 设置路由信息 由dubbo 配置控制台配置
     protected void addRouters(List<Router> routers) {
         routers = routers == null ? Collections.emptyList() : routers;
         routerChain.addRouters(routers);

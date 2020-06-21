@@ -74,6 +74,7 @@ public class GenericImplFilter implements Filter, Filter.Listener {
 
             String methodName = invocation2.getMethodName();
             Class<?>[] parameterTypes = invocation2.getParameterTypes();
+            // 获取参数
             Object[] arguments = invocation2.getArguments();
 
             String[] types = new String[parameterTypes.length];
@@ -102,6 +103,7 @@ public class GenericImplFilter implements Filter, Filter.Listener {
             return invoker.invoke(invocation2);
         }
         // making a generic call to a normal service
+        // 远程调用
         else if (isMakingGenericCall(generic, invocation)) {
 
             Object[] args = (Object[]) invocation.getArguments()[2];
@@ -214,6 +216,7 @@ public class GenericImplFilter implements Filter, Filter.Listener {
 
     }
 
+    // 判断是否为泛化调用
     private boolean isCallingGenericImpl(String generic, Invocation invocation) {
         return ProtocolUtils.isGeneric(generic)
                 && (!$INVOKE.equals(invocation.getMethodName()) && !$INVOKE_ASYNC.equals(invocation.getMethodName()))

@@ -29,6 +29,7 @@ public class DirectDispatcher implements Dispatcher {
 
     @Override
     public ChannelHandler dispatch(ChannelHandler handler, URL url) {
+        // 所有事件都在IO主线程上处理
         return new DirectChannelHandler(handler, url);
     }
 

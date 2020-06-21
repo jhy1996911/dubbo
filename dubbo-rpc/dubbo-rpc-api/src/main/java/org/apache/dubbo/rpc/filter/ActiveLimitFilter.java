@@ -48,14 +48,18 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
 
     @Override
     public Result invoke(Invoker<?> invoker, Invocation invocation) throws RpcException {
+        // 获取url和调用方法名称
         URL url = invoker.getUrl();
         String methodName = invocation.getMethodName();
+        // 获取设置的最大可用并发数
         int max = invoker.getUrl().getMethodParameter(methodName, ACTIVES_KEY, 0);
         final RpcStatus rpcStatus = RpcStatus.getStatus(invoker.getUrl(), invocation.getMethodName());
+        // 判断有没有超过并发限制
         if (!RpcStatus.beginCount(url, methodName, max)) {
             long timeout = invoker.getUrl().getMethodParameter(invocation.getMethodName(), TIMEOUT_KEY, 0);
             long start = System.currentTimeMillis();
             long remain = timeout;
+            // 超过并发限制则阻塞当前线程 timeout时间
             synchronized (rpcStatus) {
                 while (!RpcStatus.beginCount(url, methodName, max)) {
                     try {
@@ -65,6 +69,7 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
                     }
                     long elapsed = System.currentTimeMillis() - start;
                     remain = timeout - elapsed;
+                    // 超时了还没被唤醒 则抛出异常
                     if (remain <= 0) {
                         throw new RpcException(RpcException.LIMIT_EXCEEDED_EXCEPTION,
                                 "Waiting concurrent invoke timeout in client-side for service:  " +
@@ -76,6 +81,7 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
             }
         }
 
+        // 并发数没有到达限制 继续进行调用
         invocation.put(ACTIVELIMIT_FILTER_START_TIME, System.currentTimeMillis());
 
         return invoker.invoke(invocation);
@@ -87,6 +93,7 @@ public class ActiveLimitFilter implements Filter, Filter.Listener {
         URL url = invoker.getUrl();
         int max = invoker.getUrl().getMethodParameter(methodName, ACTIVES_KEY, 0);
 
+        // 调用完成后 并发数-1 并通知所有挂起线程
         RpcStatus.endCount(url, methodName, getElapsed(invocation), true);
         notifyFinish(RpcStatus.getStatus(url, methodName), max);
     }

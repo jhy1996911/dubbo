@@ -65,6 +65,10 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
         return selector.select(invocation);
     }
 
+    /**
+     * 一致性哈希策略
+     * @param <T>
+     */
     private static final class ConsistentHashSelector<T> {
 
         private final TreeMap<Long, Invoker<T>> virtualInvokers;
@@ -79,6 +83,7 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
             this.virtualInvokers = new TreeMap<Long, Invoker<T>>();
             this.identityHashCode = identityHashCode;
             URL url = invokers.get(0).getUrl();
+            // 虚拟节点个数 默认160
             this.replicaNumber = url.getMethodParameter(methodName, HASH_NODES, 160);
             String[] index = COMMA_SPLIT_PATTERN.split(url.getMethodParameter(methodName, HASH_ARGUMENTS, "0"));
             argumentIndex = new int[index.length];
@@ -99,7 +104,9 @@ public class ConsistentHashLoadBalance extends AbstractLoadBalance {
 
         public Invoker<T> select(Invocation invocation) {
             String key = toKey(invocation.getArguments());
+            // 计算出key对应的md5
             byte[] digest = md5(key);
+            // 利用hash一致性算法 计算出对应的服务提供者
             return selectForKey(hash(digest, 0));
         }
 
